@@ -1,21 +1,65 @@
+import 'package:amazon/constants/global_variables.dart';
+import 'package:amazon/common/widgets/bottom_bar.dart';
+import 'package:amazon/constants/global_variables.dart';
+import 'package:amazon/features/admin/screens/admin_screen.dart';
+import 'package:amazon/features/auth/screens/auth_screen.dart';
+import 'package:amazon/features/auth/services/auth_service.dart';
+import 'package:amazon/providers/user_provider.dart';
+import 'package:amazon/router.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MultiProvider(providers: [
+    ChangeNotifierProvider(
+      create: (context) => UserProvider(),
+    ),
+  ], child: const MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final AuthService authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    authService.getUserData(context);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final role = Provider.of<UserProvider>(context).user.type;
+    final token = Provider.of<UserProvider>(context).user.token;
+
     return MaterialApp(
-      title: 'amazon-clone',
+      debugShowCheckedModeBanner: false,
+      title: 'Amazon Clone',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        scaffoldBackgroundColor: GlobalVariables.backgroundColor,
+        colorScheme: const ColorScheme.light(
+          primary: GlobalVariables.secondaryColor,
+        ),
+        appBarTheme: const AppBarTheme(
+          elevation: 0,
+          iconTheme: IconThemeData(
+            color: Colors.black,
+          ),
+        ),
+        useMaterial3: true, // can remove this line
       ),
-      home: const Placeholder(),
+      onGenerateRoute: (settings) => generateRoute(settings),
+      home: token.isNotEmpty
+          ? 'user' != role
+              ? const BottomBar()
+              : const AdminScreen()
+          : const AuthScreen(),
     );
   }
 }
